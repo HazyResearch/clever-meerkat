@@ -1,13 +1,9 @@
-from meerkat.contrib.registry import Registry
+from meerkat.contrib.models import models as MODEL_REGISTRY
 import meerkat as mk
 import torch
 from torch import nn
 import os
 from typing import Callable
-
-
-MODEL_REGISTRY = Registry()
-
 
 
 def embed(
@@ -33,7 +29,7 @@ def embed(
 
     model, preprocess = MODEL_REGISTRY.get(model_name, model_dir=model_dir, **kwargs)
 
-    def _embed_batch(self, batch: torch.Tensor):
+    def _embed_batch(batch: torch.Tensor):
         return model.encode_image(batch)
 
     _embed(
