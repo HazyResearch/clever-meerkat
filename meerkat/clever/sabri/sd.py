@@ -34,8 +34,8 @@ def groupby(
         group_name = by[0]
     else:
         method = DominoSlicer(
-            y_log_likelihood_weight=10,
-            y_hat_log_likelihood_weight=10,
+            y_log_likelihood_weight=5,
+            y_hat_log_likelihood_weight=5,
             n_slices=n_groups,
             n_mixture_components=n_groups,
         )
@@ -49,21 +49,24 @@ def groupby(
         group_name = "-".join(by)
         dp[group_name] = groups
 
-    print(group_name)
-    return DataPanelGroupBy(dp=dp, groups=group_name)
+    return DataPanelGroupBy(dp=dp, groups=groups, group_name=group_name)
 
 
 class DataPanelGroupBy:
-    def __init__(self, dp: DataPanel, groups: Union[str, NumpyArrayColumn]):
+    def __init__(
+        self,
+        dp: DataPanel,
+        groups: Union[str, NumpyArrayColumn],
+        group_name: str = "group",
+    ):
 
         self.dp = dp
-
         if isinstance(groups, str):
-            self.group_name = groups
             self.groups = dp[groups]
         else:
             self.groups = groups
-            self.group_name = "group"
+
+        self.group_name = group_name
 
         def _include_column(column) -> bool:
             return (
@@ -96,6 +99,7 @@ class DataPanelGroupBy:
         for name in self.dp.columns:
             res = self[name].mean()
             if self.group_name not in dp:
+                print(self.group_name)
                 dp[self.group_name] = res[self.group_name]
 
             dp[name] = res[name]
@@ -129,7 +133,9 @@ class DataPanelGroupBy:
                 f"GroupBy not implemented for column of type {type(column)}."
             )
         else:
-            return DataPanelGroupBy(dp=self.dp[column], groups=self.groups)
+            return DataPanelGroupBy(
+                dp=self.dp[column], groups=self.groups, group_name=self.group_name
+            )
 
 
 class PandasGroupBy:
