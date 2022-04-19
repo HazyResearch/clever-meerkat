@@ -729,6 +729,14 @@ class DataPanel(
             suffixes=suffixes,
             validate=validate,
         )
+    
+    def groupby(self, *args, **kwargs):
+        from meerkat.clever.sabri.sd import groupby
+        return groupby(
+            self,
+            *args,
+            **kwargs 
+        )
 
     def items(self):
         for name in self.columns:

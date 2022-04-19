@@ -9,6 +9,7 @@ from .encoder import Encoder
 from meerkat.contrib.registry import Registry
 from .bit import bit
 from .clip import clip
+from ..utils import DeferredOp
 
 __all__ = ["clip", "bit"]
 
@@ -29,8 +30,8 @@ def infer_modality(col: mk.AbstractColumn):
 
 
 def embed(
-    data: mk.DataPanel,
     input_col: str,
+    data: mk.DataPanel = None,
     encoder: Union[str, Encoder] = "clip",
     modality: str = None,
     out_col: str = None,
@@ -38,6 +39,7 @@ def embed(
     mmap_dir: str = None,
     num_workers: int = 4,
     batch_size: int = 128,
+    overwrite: bool = False,
     **kwargs,
 ) -> mk.DataPanel:
     """Embed a column of data with an encoder from the encoder registry.
@@ -86,16 +88,27 @@ def embed(
             :func:`~domino._embed.clip`).
 
     Returns:
-        mk.DataPanel: A view of ``data`` with a new column containing the embeddings.
+        mk.DataPanel: ``data`` with a new column containing the embeddings.
         This column will be named according to the ``out_col`` parameter.
     """
+
+    if out_col is None:
+        # important that this is done before locals below, so the correct out_col is
+        # passed
+        out_col = f"{encoder}({input_col})"
+
+    if data is None:
+        kwargs = locals()
+        kwargs.pop("data")
+        return DeferredOp(op=embed, **kwargs)            
 
     if modality is None:
 
         modality = infer_modality(col=data[input_col])
 
-    if out_col is None:
-        out_col = f"{encoder}({input_col})"
+    
+    if (out_col in data) and not overwrite:
+        return data 
 
     encoder = encoders.get(encoder, device=device, **kwargs)
 
